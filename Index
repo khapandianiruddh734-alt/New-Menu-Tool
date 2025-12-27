@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Master Suite Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
+        .tool-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .tool-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col">
+
+    <nav class="bg-white shadow z-50">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center cursor-pointer" onclick="location.reload()">
+                    <span class="text-2xl font-bold text-indigo-600">PDF Master<span class="text-gray-800">Suite</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow max-w-7xl mx-auto px-4 py-12 w-full">
+        
+        <div id="menu-view">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                
+                <div>
+                    <h2 class="text-gray-500 font-bold tracking-wider text-sm mb-4 uppercase">PDF Tools</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div onclick="loadTool('jpg-to-pdf')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4">
+                            <div class="bg-yellow-100 p-3 rounded text-yellow-600">🖼️</div>
+                            <div><h3 class="font-bold">JPG to PDF</h3></div>
+                        </div>
+                        <div onclick="loadTool('word-to-pdf')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4">
+                            <div class="bg-blue-100 p-3 rounded text-blue-600">📝</div>
+                            <div><h3 class="font-bold">WORD to PDF</h3></div>
+                        </div>
+                        <div onclick="loadTool('pdf-to-jpg')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4">
+                            <div class="bg-red-100 p-3 rounded text-red-600">📄</div>
+                            <div><h3 class="font-bold">PDF to JPG</h3></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-gray-500 font-bold tracking-wider text-sm mb-4 uppercase">Data Tools</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div onclick="loadTool('excel-to-pdf')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4">
+                            <div class="bg-green-100 p-3 rounded text-green-600">📊</div>
+                            <div><h3 class="font-bold">EXCEL to PDF</h3></div>
+                        </div>
+                        
+                        <div onclick="loadTool('clean-excel')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4 border-l-4 border-indigo-500">
+                            <div class="bg-indigo-100 p-3 rounded text-indigo-600">🧹</div>
+                            <div>
+                                <h3 class="font-bold">Clean Excel</h3>
+                                <p class="text-xs text-gray-400">Remove accents & symbols</p>
+                            </div>
+                        </div>
+
+                        <div onclick="loadTool('pdf-image-to-excel')" class="tool-card bg-white p-4 rounded-lg shadow cursor-pointer flex items-center space-x-4">
+                            <div class="bg-purple-100 p-3 rounded text-purple-600">👁️</div>
+                            <div>
+                                <h3 class="font-bold">PDF/Img to Excel</h3>
+                                <p class="text-xs text-gray-400">Extract Data</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="workspace-view" class="hidden bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center max-w-3xl mx-auto mt-8">
+            <button onclick="location.reload()" class="text-sm text-indigo-500 hover:underline mb-6 block text-left">← Back to All Tools</button>
+            
+            <h1 id="tool-title" class="text-3xl font-bold text-gray-800 mb-2">Tool Name</h1>
+            <p id="tool-desc" class="text-gray-500 mb-8">Description</p>
+
+            <div id="drop-area" class="border-2 border-dashed border-indigo-300 rounded-xl bg-indigo-50 p-12 cursor-pointer hover:bg-indigo-100 transition" onclick="document.getElementById('file-input').click()">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-indigo-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <span class="text-lg font-semibold text-indigo-900">Choose File</span>
+                    <span class="text-sm text-indigo-600 mt-1" id="file-formats">Supported formats...</span>
+                </div>
+                <input type="file" id="file-input" class="hidden" onchange="handleFile(this.files)">
+            </div>
+
+            <div id="status-area" class="mt-8 hidden">
+                <div id="loading-spinner" class="hidden flex justify-center items-center mb-4">
+                    <div class="loader"></div><span class="ml-3 text-indigo-600 font-medium">Processing...</span>
+                </div>
+                <div id="success-msg" class="hidden">
+                    <p class="text-green-600 font-bold text-lg mb-4">🎉 Process Complete!</p>
+                    <button id="download-btn" class="bg-indigo-600 text-white px-8 py-3 rounded-lg shadow hover:bg-indigo-700 font-bold transition">Download Result</button>
+                </div>
+                <p id="error-msg" class="text-red-500 mt-4 hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTool = null;
+        let selectedFile = null;
+
+        // --- THE TOOLS LIBRARY ---
+        const tools = {
+            'jpg-to-pdf': { title: "JPG to PDF", desc: "Convert images to PDF.", accept: "image/*", handler: convertJpgToPdf },
+            'word-to-pdf': { title: "Word to PDF", desc: "Convert DOCX to PDF.", accept: ".docx", handler: convertWordToPdf },
+            'excel-to-pdf': { title: "Excel to PDF", desc: "Convert Sheets to PDF.", accept: ".xlsx, .xls", handler: convertExcelToPdf },
+            'pdf-to-jpg': { title: "PDF to JPG", desc: "Extract pages as images.", accept: ".pdf", handler: convertPdfToJpg },
+            'pdf-image-to-excel': { title: "PDF/Image to Excel", desc: "Extract data to Excel.", accept: ".pdf, image/*", handler: convertPdfImageToExcel },
+            // NEW TOOL
+            'clean-excel': { title: "Clean Excel Sheet", desc: "Remove accents (é→e) and special symbols.", accept: ".xlsx, .csv", handler: cleanExcelFile }
+        };
+
+        function loadTool(id) {
+            currentTool = tools[id];
+            if(!currentTool) return;
+            document.getElementById('menu-view').classList.add('hidden');
+            document.getElementById('workspace-view').classList.remove('hidden');
+            document.getElementById('tool-title').innerText = currentTool.title;
+            document.getElementById('tool-desc').innerText = currentTool.desc;
+            document.getElementById('file-formats').innerText = "Supports: " + currentTool.accept;
+            document.getElementById('file-input').accept = currentTool.accept;
+            resetUI();
+        }
+
+        function resetUI() {
+            document.getElementById('status-area').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.add('hidden');
+            document.getElementById('success-msg').classList.add('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+            document.getElementById('drop-area').classList.remove('hidden');
+            document.getElementById('file-input').value = '';
+        }
+
+        async function handleFile(files) {
+            if (files.length === 0) return;
+            selectedFile = files[0];
+            document.getElementById('drop-area').classList.add('hidden');
+            document.getElementById('status-area').classList.remove('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+
+            try {
+                await currentTool.handler(selectedFile);
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('success-msg').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('error-msg').innerText = "Error: " + err.message;
+                document.getElementById('error-msg').classList.remove('hidden');
+                document.getElementById('drop-area').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        //          NEW: CLEAN EXCEL TOOL
+        // ==========================================
+        async function cleanExcelFile(file) {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            
+            // Loop through every sheet in the workbook
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                // Get range of cells
+                const range = XLSX.utils.decode_range(sheet['!ref']);
+                
+                // Loop through every cell
+                for(let R = range.s.r; R <= range.e.r; ++R) {
+                    for(let C = range.s.c; C <= range.e.c; ++C) {
+                        const cellAddress = XLSX.utils.encode_cell({r:R, c:C});
+                        const cell = sheet[cellAddress];
+                        
+                        // Only clean if it's a string (Type 's')
+                        if(cell && cell.t === 's') {
+                            cell.v = cleanString(cell.v);
+                        }
+                    }
+                }
+            });
+
+            // Save the cleaned file
+            XLSX.writeFile(workbook, "Cleaned_" + file.name);
+        }
+
+        // The Magic Cleaning Logic
+        function cleanString(str) {
+            if (!str) return str;
+            
+            // 1. Normalize Accents: This splits 'é' into 'e' + '´'
+            let cleaned = str.normalize("NFD");
+            
+            // 2. Remove the accent marks (Diacritics range)
+            cleaned = cleaned.replace(/[\u0300-\u036f]/g, "");
+
+            // 3. Replace specific symbols user mentioned
+            cleaned = cleaned.replace(/–/g, "-");  // En-dash to hyphen
+            cleaned = cleaned.replace(/—/g, "-");  // Em-dash to hyphen
+            
+            // 4. Remove anything that isn't simple English (ASCII)
+            // This regex keeps Letters (a-z), Numbers (0-9), and basic punctuation (.,- )
+            // It removes weird hidden characters, emojis, etc.
+            cleaned = cleaned.replace(/[^\x00-\x7F]/g, "");
+
+            return cleaned;
+        }
+
+        // ==========================================
+        //       EXISTING TOOLS (From previous code)
+        // ==========================================
+        
+        async function convertJpgToPdf(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const doc = new window.jspdf.jsPDF();
+                        const width = doc.internal.pageSize.getWidth();
+                        const height = (img.height * width) / img.width;
+                        doc.addImage(img, 'JPEG', 0, 0, width, height);
+                        setupDownload(doc.output('blob'), "converted.pdf");
+                        resolve();
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function convertWordToPdf(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+            const pdfBlob = await html2pdf().from(result.value).output('blob');
+            setupDownload(pdfBlob, "converted.pdf");
+        }
+
+        async function convertExcelToPdf(file) {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const htmlTable = XLSX.utils.sheet_to_html(firstSheet);
+            const pdfBlob = await html2pdf().from(htmlTable).output('blob');
+            setupDownload(pdfBlob, "converted.pdf");
+        }
+
+        async function convertPdfToJpg(file) {
+            const data = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(data).promise;
+            const zip = new JSZip();
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                zip.file(`page-${i}.jpg`, canvas.toDataURL('image/jpeg').split(',')[1], {base64: true});
+            }
+            setupDownload(await zip.generateAsync({type:"blob"}), "pages.zip");
+        }
+
+        async function convertPdfImageToExcel(file) {
+            let extractedText = "";
+            if (file.type === "application/pdf") {
+                const data = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(data).promise;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    extractedText += textContent.items.map(i => i.str).join(' ') + "\n";
+                }
+            } else if (file.type.startsWith("image/")) {
+                const worker = Tesseract.createWorker();
+                await worker.load(); await worker.loadLanguage('eng'); await worker.initialize('eng');
+                const { data: { text } } = await worker.recognize(file);
+                extractedText = text;
+                await worker.terminate();
+            }
+            
+            // Create a dummy Excel with extracted data
+            const rows = extractedText.split('\n').map(line => [line]);
+            const worksheet = XLSX.utils.aoa_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, "extracted_data.xlsx");
+        }
+
+        function setupDownload(blob, filename) {
+            const btn = document.getElementById('download-btn');
+            btn.onclick = () => saveAs(blob, filename);
+        }
+    </script>
+</body>
+</html>
